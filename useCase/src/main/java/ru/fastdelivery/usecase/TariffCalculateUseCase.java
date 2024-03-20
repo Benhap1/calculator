@@ -3,19 +3,16 @@ package ru.fastdelivery.usecase;
 import lombok.RequiredArgsConstructor;
 import ru.fastdelivery.domain.common.price.Price;
 import ru.fastdelivery.domain.delivery.shipment.Shipment;
+
 import javax.inject.Named;
 import java.math.BigDecimal;
-import java.util.Comparator;
 
 @Named
 @RequiredArgsConstructor
 public class TariffCalculateUseCase {
     private final WeightPriceProvider weightPriceProvider;
     private final VolumePriceProvider volumePriceProvider;
-//    public TariffCalculateUseCase(WeightPriceProvider weightPriceProvider, VolumePriceProvider volumePriceProvider) {
-//        this.weightPriceProvider = weightPriceProvider;
-//        this.volumePriceProvider = volumePriceProvider;
-//    }
+
     public Price calc(Shipment shipment) {
         BigDecimal minimalPrice = weightPriceProvider.minimalPrice().amount();
 
