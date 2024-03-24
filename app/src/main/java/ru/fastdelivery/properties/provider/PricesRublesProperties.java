@@ -20,7 +20,6 @@ public class PricesRublesProperties implements WeightPriceProvider, VolumePriceP
     private BigDecimal perKg;
     private BigDecimal perCubicMeter;
     private BigDecimal minimal;
-    private BigDecimal minimalVolume;
 
     @Autowired
     private CurrencyFactory currencyFactory;
@@ -40,8 +39,4 @@ public class PricesRublesProperties implements WeightPriceProvider, VolumePriceP
         return new Price(perCubicMeter, currencyFactory.create("RUB"));
     }
 
-    @Override
-    public Price minimalVolume() {
-        return new Price(minimalVolume, currencyFactory.create("RUB"));
-    }
 }
