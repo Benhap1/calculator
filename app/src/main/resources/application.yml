@@ -1,6 +1,7 @@
 currency:
   available:
     - "RUB"
+    - "USD"
 cost:
   rub:
     perKg: 400

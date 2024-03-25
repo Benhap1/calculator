@@ -7,12 +7,8 @@ import ru.fastdelivery.domain.common.currency.CurrencyFactory;
 import ru.fastdelivery.domain.common.price.Price;
 import ru.fastdelivery.usecase.VolumePriceProvider;
 import ru.fastdelivery.usecase.WeightPriceProvider;
-
 import java.math.BigDecimal;
 
-/**
- * Настройки базовых цен стоимости перевозки из конфига
- */
 @ConfigurationProperties("cost.rub")
 @Setter
 public class PricesRublesProperties implements WeightPriceProvider, VolumePriceProvider {

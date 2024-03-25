@@ -16,9 +16,21 @@ import ru.fastdelivery.domain.common.weight.Weight;
 import ru.fastdelivery.domain.delivery.pack.Pack;
 import ru.fastdelivery.domain.delivery.shipment.Shipment;
 import ru.fastdelivery.presentation.api.request.CalculatePackagesRequest;
-import ru.fastdelivery.presentation.api.request.CargoPackage;
 import ru.fastdelivery.presentation.api.response.CalculatePackagesResponse;
 import ru.fastdelivery.usecase.TariffCalculateUseCase;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/v1/calculate/")
@@ -34,15 +46,58 @@ public class CalculateController {
             @ApiResponse(responseCode = "200", description = "Successful operation"),
             @ApiResponse(responseCode = "400", description = "Invalid input provided")
     })
-    public CalculatePackagesResponse calculate(
-            @Valid @RequestBody CalculatePackagesRequest request) {
-        var packs = request.packages().stream()
-                .map(pack -> new Pack(new Weight(pack.weight()), new Volume(pack.length(), pack.width(), pack.height())))
-                .toList();
+    public CalculatePackagesResponse calculate(@Valid @RequestBody CalculatePackagesRequest request) {
+        try {
+            double dollarRate = getDollarRate();
 
-        var shipment = new Shipment(packs, currencyFactory.create(request.currencyCode()));
-        var calculatedPrice = tariffCalculateUseCase.calc(shipment);
-        var minimalPrice = tariffCalculateUseCase.minimalPrice();
-        return new CalculatePackagesResponse(calculatedPrice, minimalPrice);
+            var packs = request.packages().stream()
+                    .map(pack -> new Pack(new Weight(pack.weight()), new Volume(pack.length(), pack.width(), pack.height())))
+                    .toList();
+
+            Shipment shipment;
+            if (request.currencyCode().equalsIgnoreCase("USD")) {
+                BigDecimal totalPriceRubles = tariffCalculateUseCase.calc(new Shipment(packs, currencyFactory.create("RUB"))).amount();
+                BigDecimal minimalPriceRubles = tariffCalculateUseCase.minimalPrice().amount();
+
+                BigDecimal totalPriceUSD = totalPriceRubles.divide(BigDecimal.valueOf(dollarRate), 2, BigDecimal.ROUND_HALF_UP);
+                BigDecimal minimalPriceUSD = minimalPriceRubles.divide(BigDecimal.valueOf(dollarRate), 2, BigDecimal.ROUND_HALF_UP);
+
+                shipment = new Shipment(packs, currencyFactory.create(request.currencyCode()));
+                return new CalculatePackagesResponse(totalPriceUSD, minimalPriceUSD, request.currencyCode());
+            } else {
+                shipment = new Shipment(packs, currencyFactory.create(request.currencyCode()));
+                var calculatedPrice = tariffCalculateUseCase.calc(shipment);
+                var minimalPrice = tariffCalculateUseCase.minimalPrice();
+                return new CalculatePackagesResponse(calculatedPrice, minimalPrice);
+            }
+        } catch (IOException | ParserConfigurationException | SAXException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to get dollar rate");
+        }
+    }
+
+    private static double getDollarRate() throws IOException, ParserConfigurationException, SAXException {
+        LocalDate currentDate = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String formattedDate = currentDate.format(formatter);
+
+        URL url = new URL("http://www.cbr.ru/scripts/XML_daily.asp?date_req=" + formattedDate);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document doc = builder.parse(connection.getInputStream());
+
+        NodeList nodeList = doc.getElementsByTagName("Valute");
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Element element = (Element) nodeList.item(i);
+            String charCode = element.getElementsByTagName("CharCode").item(0).getTextContent();
+            if (charCode.equals("USD")) {
+                String valueStr = element.getElementsByTagName("Value").item(0).getTextContent().replace(",", ".");
+                return Double.parseDouble(valueStr);
+            }
+        }
+        return -1;
     }
 }

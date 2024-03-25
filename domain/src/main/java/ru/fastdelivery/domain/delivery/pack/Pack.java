@@ -5,11 +5,6 @@ import ru.fastdelivery.domain.common.weight.Weight;
 
 import java.math.BigInteger;
 
-/**
- * Упаковка груза
- *
- * @param weight вес товаров в упаковке
- */
 public record Pack(Weight weight, Volume volume) {
     // Определяем максимальные габариты и вес упаковки
     private static final Volume maxVolume = new Volume(BigInteger.valueOf(1500), BigInteger.valueOf(1500), BigInteger.valueOf(1500));

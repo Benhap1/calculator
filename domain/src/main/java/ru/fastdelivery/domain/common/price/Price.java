@@ -4,10 +4,6 @@ import ru.fastdelivery.domain.common.currency.Currency;
 
 import java.math.BigDecimal;
 
-/**
- * @param amount   значение цены
- * @param currency валюта цены
- */
 public record Price(
         BigDecimal amount,
         Currency currency) {

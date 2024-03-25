@@ -7,9 +7,6 @@ import ru.fastdelivery.domain.common.currency.CurrencyPropertiesProvider;
 
 import java.util.List;
 
-/**
- * Настройки валют из конфига
- */
 @Configuration
 @ConfigurationProperties("currency")
 @Setter
