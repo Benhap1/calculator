@@ -13,9 +13,9 @@ public record Pack(Weight weight, Volume volume) {
     public Pack {
         // Проверяем соответствие параметров упаковки ограничениям
         if (weight.greaterThan(maxWeight) ||
-                volume.length().compareTo(BigInteger.ZERO) < 0 ||
-                volume.width().compareTo(BigInteger.ZERO) < 0 ||
-                volume.height().compareTo(BigInteger.ZERO) < 0 ||
+                volume.length().compareTo(BigInteger.ZERO) <= 0 ||
+                volume.width().compareTo(BigInteger.ZERO) <= 0 ||
+                volume.height().compareTo(BigInteger.ZERO) <= 0 ||
                 volume.length().compareTo(maxVolume.length()) > 0 ||
                 volume.width().compareTo(maxVolume.width()) > 0 ||
                 volume.height().compareTo(maxVolume.height()) > 0) {
