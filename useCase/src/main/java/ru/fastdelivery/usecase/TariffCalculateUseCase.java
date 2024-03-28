@@ -26,6 +26,7 @@ public class TariffCalculateUseCase {
 
         BigDecimal totalPrice = volumePrice.max(weightPrice).max(minimalPrice);
 
+
         return new Price(totalPrice, weightPriceProvider.costPerKg().currency());
     }
 

@@ -7,4 +7,11 @@ cost:
     perKg: 400
     perCubicMeter: 800
     minimal: 350
+coordinates:
+  latitude:
+    min: 45
+    max: 65
+  longitude:
+    min: 30
+    max: 96
 

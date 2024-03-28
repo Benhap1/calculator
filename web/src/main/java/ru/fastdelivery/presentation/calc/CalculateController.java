@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.fastdelivery.domain.common.currency.CurrencyFactory;
+import ru.fastdelivery.domain.common.distance.DistanceCalculator;
 import ru.fastdelivery.domain.common.volume.Volume;
 import ru.fastdelivery.domain.common.weight.Weight;
 import ru.fastdelivery.domain.delivery.pack.Pack;
@@ -18,6 +19,7 @@ import ru.fastdelivery.domain.delivery.shipment.Shipment;
 import ru.fastdelivery.presentation.api.request.CalculatePackagesRequest;
 import ru.fastdelivery.presentation.api.response.CalculatePackagesResponse;
 import ru.fastdelivery.usecase.TariffCalculateUseCase;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -28,6 +30,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -40,6 +44,7 @@ import org.xml.sax.SAXException;
 public class CalculateController {
     private final TariffCalculateUseCase tariffCalculateUseCase;
     private final CurrencyFactory currencyFactory;
+    private final DistanceCalculator distanceCalculator;
 
     @PostMapping
     @Operation(summary = "Расчет стоимости по упаковкам груза")
@@ -49,37 +54,57 @@ public class CalculateController {
     })
     public CalculatePackagesResponse calculate(@Valid @RequestBody CalculatePackagesRequest request) {
         try {
+            // Узнаем текущий курс доллара
             double dollarRate = getDollarRate();
 
+            // Проверяем, что вес упаковки не равен нулю
             if (request.packages().stream().anyMatch(pack -> pack.weight().equals(BigDecimal.ZERO))) {
                 throw new IllegalArgumentException("Weight of the package cannot be zero");
             }
 
-            var packs = request.packages().stream()
+            // Создаем список упаковок для отправки
+            List<Pack> packs = request.packages().stream()
                     .map(pack -> new Pack(new Weight(pack.weight()), new Volume(pack.length(), pack.width(), pack.height())))
                     .toList();
 
-            Shipment shipment;
-            if (request.currencyCode().equalsIgnoreCase("USD")) {
-                BigDecimal totalPriceRubles = tariffCalculateUseCase.calc(new Shipment(packs, currencyFactory.create("RUB"))).amount();
-                BigDecimal minimalPriceRubles = tariffCalculateUseCase.minimalPrice().amount();
+            // Рассчитываем расстояние между точками отправления и назначения
+            double distance = distanceCalculator.calculateDistance(
+                    request.departure().latitude(),
+                    request.departure().longitude(),
+                    request.destination().latitude(),
+                    request.destination().longitude()
+            );
 
-                BigDecimal totalPriceUSD = totalPriceRubles.divide(BigDecimal.valueOf(dollarRate), 2, RoundingMode.HALF_UP);
-                BigDecimal minimalPriceUSD = minimalPriceRubles.divide(BigDecimal.valueOf(dollarRate), 2, RoundingMode.HALF_UP);
+            // Рассчитываем стоимость на основе веса и объема
+            Shipment shipment = new Shipment(packs, currencyFactory.create(request.currencyCode()));
+            BigDecimal basePrice = tariffCalculateUseCase.calc(shipment).amount();
 
-                return new CalculatePackagesResponse(totalPriceUSD, minimalPriceUSD, request.currencyCode());
+            // Устанавливаем стоимость за каждые 450 км как базовую стоимость
+            BigDecimal basePricePer450km = basePrice;
+
+            // Рассчитываем количество блоков по 450 км
+            int blocks = (int) Math.ceil(distance / 450);
+
+            // Общая стоимость за дополнительное расстояние
+            BigDecimal additionalPrice = basePricePer450km.multiply(BigDecimal.valueOf(blocks));
+
+            // Итоговая стоимость
+            BigDecimal totalPrice;
+            if (request.currencyCode().equals("USD")) {
+                // Если валюта USD, то переводим стоимость в USD по текущему курсу
+                totalPrice = additionalPrice.divide(BigDecimal.valueOf(dollarRate), 2, RoundingMode.HALF_UP);
             } else {
-                shipment = new Shipment(packs, currencyFactory.create(request.currencyCode()));
-                var calculatedPrice = tariffCalculateUseCase.calc(shipment);
-                var minimalPrice = tariffCalculateUseCase.minimalPrice();
-                return new CalculatePackagesResponse(calculatedPrice, minimalPrice);
+                totalPrice = basePrice.add(additionalPrice);
             }
+
+            return new CalculatePackagesResponse(totalPrice, tariffCalculateUseCase.minimalPrice().amount(), request.currencyCode());
         } catch (IOException | ParserConfigurationException | SAXException e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to get dollar rate");
         }
     }
 
+    // Метод, который парсит курс доллара (XML-файл) с сайта ЦБР
     private static double getDollarRate() throws IOException, ParserConfigurationException, SAXException {
         LocalDate currentDate = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -105,3 +130,6 @@ public class CalculateController {
         return -1;
     }
 }
+
+
+
