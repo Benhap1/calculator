@@ -79,14 +79,11 @@ public class CalculateController {
             Shipment shipment = new Shipment(packs, currencyFactory.create(request.currencyCode()));
             BigDecimal basePrice = tariffCalculateUseCase.calc(shipment).amount();
 
-            // Устанавливаем стоимость за каждые 450 км как базовую стоимость
-            BigDecimal basePricePer450km = basePrice;
-
             // Рассчитываем количество блоков по 450 км
             int blocks = (int) Math.ceil(distance / 450);
 
             // Общая стоимость за дополнительное расстояние
-            BigDecimal additionalPrice = basePricePer450km.multiply(BigDecimal.valueOf(blocks));
+            BigDecimal additionalPrice = basePrice.multiply(BigDecimal.valueOf(blocks));
 
             // Итоговая стоимость
             BigDecimal totalPrice;
