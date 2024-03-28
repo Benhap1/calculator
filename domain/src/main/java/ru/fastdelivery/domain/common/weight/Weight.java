@@ -1,10 +1,9 @@
 package ru.fastdelivery.domain.common.weight;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.RoundingMode;
 
-public record Weight(BigInteger weightGrams) implements Comparable<Weight> {
+public record Weight(BigDecimal weightGrams) implements Comparable<Weight> {
 
     public Weight {
         if (isLessThanZero(weightGrams)) {
@@ -12,16 +11,16 @@ public record Weight(BigInteger weightGrams) implements Comparable<Weight> {
         }
     }
 
-    private static boolean isLessThanZero(BigInteger price) {
-        return BigInteger.ZERO.compareTo(price) > 0;
+    private static boolean isLessThanZero(BigDecimal price) {
+        return BigDecimal.ZERO.compareTo(price) > 0;
     }
 
     public static Weight zero() {
-        return new Weight(BigInteger.ZERO);
+        return new Weight(BigDecimal.ZERO);
     }
 
     public BigDecimal kilograms() {
-        return new BigDecimal(weightGrams)
+        return new BigDecimal(String.valueOf(weightGrams))
                 .divide(BigDecimal.valueOf(1000), 100, RoundingMode.HALF_UP);
     }
 

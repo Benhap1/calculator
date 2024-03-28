@@ -23,7 +23,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -52,7 +51,7 @@ public class CalculateController {
         try {
             double dollarRate = getDollarRate();
 
-            if (request.packages().stream().anyMatch(pack -> pack.weight().equals(BigInteger.ZERO))) {
+            if (request.packages().stream().anyMatch(pack -> pack.weight().equals(BigDecimal.ZERO))) {
                 throw new IllegalArgumentException("Weight of the package cannot be zero");
             }
 

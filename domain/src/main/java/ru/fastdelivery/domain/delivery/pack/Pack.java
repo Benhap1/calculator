@@ -3,12 +3,13 @@ package ru.fastdelivery.domain.delivery.pack;
 import ru.fastdelivery.domain.common.volume.Volume;
 import ru.fastdelivery.domain.common.weight.Weight;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public record Pack(Weight weight, Volume volume) {
     // Определяем максимальные габариты и вес упаковки
     private static final Volume maxVolume = new Volume(BigInteger.valueOf(1500), BigInteger.valueOf(1500), BigInteger.valueOf(1500));
-    private static final Weight maxWeight = new Weight(BigInteger.valueOf(150_000)); // Указываем в граммах
+    private static final Weight maxWeight = new Weight(BigDecimal.valueOf(150_000)); // Указываем в граммах
 
     public Pack {
         // Проверяем соответствие параметров упаковки ограничениям
