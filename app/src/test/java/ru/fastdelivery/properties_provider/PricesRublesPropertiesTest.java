@@ -13,10 +13,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+
 class PricesRublesPropertiesTest {
 
-    public static final BigDecimal PER_KG = BigDecimal.valueOf(50);
-    public static final BigDecimal MINIMAL = BigDecimal.valueOf(100);
+    public static final BigDecimal PER_KG = BigDecimal.valueOf(400); // Updated perKg value
+    public static final BigDecimal MINIMAL = BigDecimal.valueOf(350); // Updated minimal value
     public static final String RUB = "RUB";
     final CurrencyFactory currencyFactory = mock(CurrencyFactory.class);
     PricesRublesProperties properties;
