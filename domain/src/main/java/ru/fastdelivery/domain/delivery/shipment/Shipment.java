@@ -4,6 +4,7 @@ import ru.fastdelivery.domain.common.currency.Currency;
 import ru.fastdelivery.domain.common.weight.Weight;
 import ru.fastdelivery.domain.delivery.pack.Pack;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public record Shipment(

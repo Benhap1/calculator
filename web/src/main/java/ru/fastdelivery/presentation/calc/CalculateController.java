@@ -77,23 +77,12 @@ public class CalculateController {
 
             // Рассчитываем стоимость на основе веса и объема
             Shipment shipment = new Shipment(packs, currencyFactory.create(request.currencyCode()));
-            BigDecimal basePrice = tariffCalculateUseCase.calc(shipment).amount();
-
-            // Рассчитываем количество блоков по 450 км
-            int blocks = (int) Math.ceil(distance / 450);
-
-            // Общая стоимость за дополнительное расстояние
-            BigDecimal additionalPrice = basePrice.multiply(BigDecimal.valueOf(blocks));
-
             // Итоговая стоимость
-            BigDecimal totalPrice;
+            BigDecimal totalPrice = tariffCalculateUseCase.calc(shipment, distance).amount();
             if (request.currencyCode().equals("USD")) {
                 // Если валюта USD, то переводим стоимость в USD по текущему курсу
-                totalPrice = additionalPrice.divide(BigDecimal.valueOf(dollarRate), 2, RoundingMode.HALF_UP);
-            } else {
-                totalPrice = basePrice.add(additionalPrice);
+                totalPrice = totalPrice.divide(BigDecimal.valueOf(dollarRate), 2, RoundingMode.HALF_UP);
             }
-
             return new CalculatePackagesResponse(totalPrice, tariffCalculateUseCase.minimalPrice().amount(), request.currencyCode());
         } catch (IOException | ParserConfigurationException | SAXException e) {
             e.printStackTrace();

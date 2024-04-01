@@ -41,7 +41,7 @@ class TariffCalculateUseCaseTest {
         var shipment = new Shipment(List.of(new Pack(new Weight(BigDecimal.valueOf(1200)), new Volume(BigInteger.valueOf(300), BigInteger.valueOf(300), BigInteger.valueOf(300)))), currency);
         var expectedPrice = new Price(BigDecimal.valueOf(120), currency);
 
-        var actualPrice = tariffCalculateUseCase.calc(shipment);
+        var actualPrice = tariffCalculateUseCase.calc(shipment,1);
 
         assertThat(actualPrice).usingRecursiveComparison()
                 .withComparatorForType(BigDecimalComparator.BIG_DECIMAL_COMPARATOR, BigDecimal.class)
