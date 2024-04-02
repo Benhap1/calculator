@@ -34,7 +34,7 @@ public class TariffCalculateUseCase {
             totalPrice = basePrice.setScale(2, RoundingMode.HALF_UP);
         } else {
             // Если расстояние больше 450 км, добавляем дополнительную стоимость за расстояние
-            totalPrice = calculateAdditionalPrice(distance).setScale(2, RoundingMode.HALF_UP);;
+            totalPrice = calculateAdditionalPrice(distance).setScale(2, RoundingMode.HALF_UP);
 
         }
 
