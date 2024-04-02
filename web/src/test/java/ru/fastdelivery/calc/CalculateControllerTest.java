@@ -43,7 +43,6 @@ class CalculateControllerTest {
     private CalculateController calculateController;
 
     @BeforeEach
-    @SuppressWarnings("java:S2095")
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
