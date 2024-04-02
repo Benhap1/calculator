@@ -36,6 +36,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/calculate/")
@@ -45,6 +48,7 @@ public class CalculateController {
     private final TariffCalculateUseCase tariffCalculateUseCase;
     private final CurrencyFactory currencyFactory;
     private final DistanceCalculator distanceCalculator;
+    private static final Logger logger = LoggerFactory.getLogger(CalculateController.class);
 
     @PostMapping
     @Operation(summary = "Расчет стоимости по упаковкам груза")
@@ -53,6 +57,12 @@ public class CalculateController {
             @ApiResponse(responseCode = "400", description = "Invalid input provided")
     })
     public CalculatePackagesResponse calculate(@Valid @RequestBody CalculatePackagesRequest request) {
+        // Создаем уникальный номер лога для текущего запроса
+        UUID logId = UUID.randomUUID();
+
+        logger.info("Request Log ID: {}", logId);
+        logger.info("Received request: {}", request);
+
         try {
             // Узнаем текущий курс доллара
             double dollarRate = getDollarRate();
@@ -83,14 +93,19 @@ public class CalculateController {
                 // Если валюта USD, то переводим стоимость в USD по текущему курсу
                 totalPrice = totalPrice.divide(BigDecimal.valueOf(dollarRate), 2, RoundingMode.HALF_UP);
             }
+            logger.info("Response Log ID: {}", logId);
+            logger.info("Response: {}", new CalculatePackagesResponse(totalPrice,
+                    tariffCalculateUseCase.minimalPrice().amount(), request.currencyCode())
+            );
             return new CalculatePackagesResponse(totalPrice, tariffCalculateUseCase.minimalPrice().amount(), request.currencyCode());
         } catch (IOException | ParserConfigurationException | SAXException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to get dollar rate");
+            logger.error("Failed to get dollar rate", e);
+            throw new RuntimeException("Failed to get dollar rate", e);
+        } catch (Exception e) {
+            logger.error("Error occurred during calculation", e);
+            throw new RuntimeException("Error occurred during calculation", e);
         }
-
     }
-
     // Метод, который парсит курс доллара (XML-файл) с сайта ЦБР
     private static double getDollarRate() throws IOException, ParserConfigurationException, SAXException {
         LocalDate currentDate = LocalDate.now();
