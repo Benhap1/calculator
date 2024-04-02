@@ -6,6 +6,7 @@ import ru.fastdelivery.domain.delivery.shipment.Shipment;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Named
 @RequiredArgsConstructor
@@ -30,10 +31,10 @@ public class TariffCalculateUseCase {
         BigDecimal totalPrice;
         if (distance <= 450) {
             // Если расстояние меньше или равно 450 км, используем базовую стоимость
-            totalPrice = basePrice;
+            totalPrice = basePrice.setScale(2, RoundingMode.HALF_UP);
         } else {
             // Если расстояние больше 450 км, добавляем дополнительную стоимость за расстояние
-            totalPrice = calculateAdditionalPrice(distance);
+            totalPrice = calculateAdditionalPrice(distance).setScale(2, RoundingMode.HALF_UP);;
 
         }
 
