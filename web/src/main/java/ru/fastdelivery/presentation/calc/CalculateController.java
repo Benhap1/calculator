@@ -88,6 +88,7 @@ public class CalculateController {
             e.printStackTrace();
             throw new RuntimeException("Failed to get dollar rate");
         }
+
     }
 
     // Метод, который парсит курс доллара (XML-файл) с сайта ЦБР
